@@ -7,6 +7,7 @@ import { Layout } from './components/Layout'
 import { RequireAuth } from './components/RequireAuth'
 import './index.css'
 import { LoginPage } from './pages/LoginPage'
+import { SystemAppsPage } from './pages/SystemAppsPage'
 import { TicketDetailPage } from './pages/TicketDetailPage'
 import { TicketsPage } from './pages/TicketsPage'
 
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <TicketsPage /> },
       { path: 'tickets/:id', element: <TicketDetailPage /> },
+      { path: 'system-apps', element: <SystemAppsPage /> },
     ],
   },
 ])

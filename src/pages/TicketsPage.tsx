@@ -57,7 +57,7 @@ export function TicketsPage() {
         </select>
         <select aria-label="Sistema origen" className={selectClass} value={params.get('systemAppId') ?? ''} onChange={(e) => update('systemAppId', e.target.value)}>
           <option value="">Todos los sistemas</option>
-          {apps.data?.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          {apps.data?.map((a) => <option key={a.id} value={a.id}>{a.name}{a.isActive ? '' : ' (inactiva)'}</option>)}
         </select>
         {/* Se aplica al salir del campo o con Enter, no en cada tecla. */}
         <form onSubmit={(e) => { e.preventDefault(); update('tenantId', (e.currentTarget.elements.namedItem('tenantId') as HTMLInputElement).value.trim()) }}>

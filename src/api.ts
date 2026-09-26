@@ -87,11 +87,22 @@ export type Ticket = {
 }
 
 export type Paged<T> = { items: T[]; page: number; pageSize: number; totalCount: number }
-export type SystemApp = { id: string; name: string }
+export type SystemApp = { id: string; name: string; clientId: string; isActive: boolean; createdAtUtc: string }
+// Solo existe en la respuesta de crear/regenerar; nunca se guarda en caché ni en localStorage.
+export type SystemAppCredentials = { name: string; clientId: string; clientSecret: string }
 
 // Los filtros viven en la URL y se reenvían tal cual (status, priority, systemAppId, tenantId, page).
 export const getTickets = (params: URLSearchParams) => api<Paged<Ticket>>(`/tickets?${params}`)
 export const getSystemApps = () => api<SystemApp[]>('/system-apps')
+
+export const createSystemApp = (name: string) =>
+  api<SystemAppCredentials & { id: string }>('/system-apps', { method: 'POST', body: JSON.stringify({ name }) })
+
+export const regenerateSystemAppSecret = (id: string) =>
+  api<Omit<SystemAppCredentials, 'name'>>(`/system-apps/${id}/secret`, { method: 'POST' })
+
+export const setSystemAppActive = (id: string, isActive: boolean) =>
+  api<void>(`/system-apps/${id}`, { method: 'PATCH', body: JSON.stringify({ isActive }) })
 
 export const formatDate = (iso: string) =>
   new Date(iso).toLocaleString('es', { dateStyle: 'short', timeStyle: 'short' })
