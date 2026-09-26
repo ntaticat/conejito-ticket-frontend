@@ -1,4 +1,4 @@
-import { clearSession, getToken, type Session } from './auth'
+import { clearSession, getToken, hasSession, setSession, type Session } from './auth'
 
 export class ApiError extends Error {
   readonly status: number
@@ -8,7 +8,30 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path: string, init: RequestInit = {}): Promise<Response> {
+let refreshing: Promise<boolean> | null = null
+
+// Una sola renovación en vuelo aunque varias peticiones la pidan a la vez.
+// Resuelve false si el servidor rechaza la sesión; un error de red se propaga (offline no cierra la sesión).
+function refresh(): Promise<boolean> {
+  refreshing ??= fetch('/api/v1/auth/refresh', { method: 'POST' })
+    .then(async (res) => {
+      if (!res.ok) return false
+      setSession(await res.json())
+      return true
+    })
+    .finally(() => (refreshing = null))
+  return refreshing
+}
+
+function expire(): never {
+  clearSession()
+  location.assign('/login')
+  throw new ApiError(401, 'Sesión expirada')
+}
+
+async function request(path: string, init: RequestInit = {}, retried = false): Promise<Response> {
+  if (!getToken() && hasSession() && !(await refresh())) expire()
+
   const headers = new Headers(init.headers)
   const token = getToken()
   if (token) headers.set('Authorization', `Bearer ${token}`)
@@ -17,8 +40,8 @@ async function request(path: string, init: RequestInit = {}): Promise<Response> 
   const res = await fetch(`/api/v1${path}`, { ...init, headers })
 
   if (res.status === 401 && token) {
-    clearSession()
-    location.assign('/login')
+    if (!retried && (await refresh())) return request(path, init, true)
+    expire()
   }
   if (!res.ok) {
     // El backend responde ProblemDetails; si no, se usa el status.
@@ -35,6 +58,10 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const login = (userName: string, password: string) =>
   api<Session>('/auth/login', { method: 'POST', body: JSON.stringify({ userName, password }) })
+
+// fetch directo: no debe intentar renovar la sesión que se está cerrando.
+export const logout = () =>
+  fetch('/api/v1/auth/logout', { method: 'POST' }).catch(() => {}).finally(clearSession)
 
 export const STATUSES = ['New', 'InProgress', 'Resolved', 'Closed'] as const
 export type TicketStatus = (typeof STATUSES)[number]

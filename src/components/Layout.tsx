@@ -1,13 +1,13 @@
 import { LogOut } from 'lucide-react'
 import { Link, Outlet, useNavigate } from 'react-router-dom'
-import { clearSession } from '../auth'
+import { logout as endSession } from '../api'
 import { PushToggle } from './PushToggle'
 
 export function Layout() {
   const navigate = useNavigate()
 
-  function logout() {
-    clearSession()
+  async function logout() {
+    await endSession()
     navigate('/login', { replace: true })
   }
 

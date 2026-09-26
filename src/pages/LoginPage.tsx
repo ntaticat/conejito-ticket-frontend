@@ -3,7 +3,7 @@ import { LoaderCircle } from 'lucide-react'
 import type { FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ApiError, login } from '../api'
-import { clearSession, getToken, setSession } from '../auth'
+import { clearSession, hasSession, setSession } from '../auth'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -16,7 +16,7 @@ export function LoginPage() {
     },
   })
 
-  if (getToken()) return <Navigate to={from} replace />
+  if (hasSession()) return <Navigate to={from} replace />
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()

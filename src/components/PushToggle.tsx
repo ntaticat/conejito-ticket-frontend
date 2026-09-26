@@ -45,8 +45,11 @@ export function PushToggle() {
   async function disable() {
     setState('loading')
     const sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription()
-    // ponytail: solo se da de baja en el navegador; el backend no tiene DELETE y la fila queda hasta que el envío reciba 410.
-    await sub?.unsubscribe()
+    if (sub) {
+      // Si el DELETE falla, la baja local sigue: el backend borra la fila cuando el envío reciba 410.
+      await api('/push/subscriptions', { method: 'DELETE', body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => {})
+      await sub.unsubscribe()
+    }
     setState('off')
   }
 
